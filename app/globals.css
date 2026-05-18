@@ -27,7 +27,7 @@
 html { scroll-behavior: smooth; }
 body {
   background-color: var(--bg-void);
-  background-image: url('/swu-law.png');
+  background-image: url('/bg.png');
   background-size: cover;
   background-position: center top;
   background-attachment: fixed;
