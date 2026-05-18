@@ -27,12 +27,20 @@
 html { scroll-behavior: smooth; }
 body {
   background-color: var(--bg-void);
+  background-image: url('/swu-law.png');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+}
+body > main {
+  background: linear-gradient(180deg, rgba(0,8,16,0.7) 0%, rgba(0,8,16,0.85) 40%, rgba(0,8,16,0.95) 100%);
+  min-height: 100vh;
 }
 body::before {
   content: '';
