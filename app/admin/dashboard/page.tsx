@@ -273,8 +273,6 @@ export default function AdminDashboard() {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontFamily: 'var(--font-display)', fontSize: '0.5rem', letterSpacing: '0.15em', color: 'var(--text-dim)', display: 'block', marginBottom: '0.35rem' }}>AÑO</label>
-                  <input type="number" className="holo-input" value={newSeasonYear} onChange={e => setNewSeasonYear(Number(e.target.value))} />
                 </div>
                 <button className="holo-btn" onClick={addSeason} style={{ flexShrink: 0 }}>CREAR</button>
               </div>
