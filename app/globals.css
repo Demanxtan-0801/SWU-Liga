@@ -43,8 +43,6 @@ body {
   overflow-x: hidden;
 }
 body > main {
-  background: linear-gradient(180deg, rgba(0,8,16,0.6) 0%, rgba(0,8,16,0.75) 100%);
-  min-height: 100vh;
 }
 body::before {
   content: '';
