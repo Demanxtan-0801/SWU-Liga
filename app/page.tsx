@@ -114,7 +114,6 @@ export default function AdminDashboard() {
     loadData(); flash('✅ Temporada activa actualizada')
   }
 
-  // --- Hall of fame ---
   async function approveRegistration(id: string, fullName: string) {
     // Add to players table
     const { error: pe } = await supabase.from('players').insert({ name: fullName })
@@ -130,6 +129,9 @@ export default function AdminDashboard() {
     loadData()
     flash('✅ Inscripción rechazada')
   }
+
+  // --- Hall of fame ---
+  async function submitHof() { // <--- ¡AQUÍ ESTABA EL CAMBIO! Declaramos la función asíncrona correctamente
     if (!hofSeason || !hofPlayer) return flash('⚠ Selecciona temporada y jugador')
     let photoUrl = null
     if (hofPhoto) {
