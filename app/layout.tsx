@@ -3,7 +3,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
-  title: 'SWw Liga La Quinta',
+  title: 'SWU Liga La Quinta',
   description: 'Star Wars Trading Card Game — Liga de Torneo Semanal',
 }
 
