@@ -62,7 +62,7 @@ export default function Navbar() {
               color: 'var(--holo-primary)',
               textShadow: 'var(--glow-sm)',
             }}>
-              SWTCG<span style={{ color: 'var(--text-dim)', margin: '0 0.5rem' }}>|</span>LIGA
+              SWU<span style={{ color: 'var(--text-dim)', margin: '0 0.5rem' }}>|</span>LIGA LA QUINTA
             </span>
           </div>
         </Link>
