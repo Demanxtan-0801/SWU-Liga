@@ -1,84 +1,142 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Season, LeaderboardEntry } from '@/types'
+import Link from 'next/link'
 
-export default function LeaderboardPage() {
-  const [seasons, setSeasons] = useState<Season[]>([])
-  const [selectedSeason, setSelectedSeason] = useState<string>('')
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [loading, setLoading] = useState(true)
+type State = 'idle' | 'loading' | 'success' | 'error'
 
-  useEffect(() => { loadSeasons() }, [])
-  useEffect(() => { if (selectedSeason) loadLeaderboard(selectedSeason) }, [selectedSeason])
+export default function InscripcionPage() {
+  const [fullName, setFullName] = useState('')
+  const [melegg, setMelegg] = useState('')
+  const [state, setState] = useState<State>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
 
-  async function loadSeasons() {
-    const { data } = await supabase.from('seasons').select('*').order('year', { ascending: false })
-    if (data) {
-      setSeasons(data)
-      const active = data.find((s: Season) => s.is_active) || data[0]
-      if (active) setSelectedSeason(active.id)
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!fullName.trim() || !melegg.trim()) return
+    setState('loading')
+    setErrorMsg('')
+
+    const { error } = await supabase.from('registrations').insert({
+      full_name: fullName.trim(),
+      melegg_username: melegg.trim(),
+    })
+
+    if (error) {
+      setErrorMsg('Hubo un error al enviar tu inscripción. Intenta de nuevo.')
+      setState('error')
+    } else {
+      setState('success')
     }
-    setLoading(false)
   }
-
-  async function loadLeaderboard(seasonId: string) {
-    setLoading(true)
-    const { data } = await supabase.from('season_leaderboard').select('*').eq('season_id', seasonId).order('total_points', { ascending: false })
-    if (data) setLeaderboard(data)
-    setLoading(false)
-  }
-
-  const getRankClass = (pos: number) => pos === 1 ? 'rank-1' : pos === 2 ? 'rank-2' : pos === 3 ? 'rank-3' : ''
-  const getRankIcon = (pos: number) => pos === 1 ? '🏆' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `#${pos}`
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '3rem 2rem' }}>
+    <div style={{ maxWidth: '560px', margin: '0 auto', padding: '4rem 2rem' }}>
+      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.4em', color: 'var(--holo-accent)', marginBottom: '0.75rem' }}>── TRANSMISIÓN IMPERIAL ──</div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 900, letterSpacing: '0.1em', color: 'var(--holo-primary)', textShadow: '0 0 30px rgba(0,212,255,0.5), 0 0 60px rgba(0,212,255,0.2)', marginBottom: '0.5rem' }}>TABLA DE RECOMPENSA</h1>
-        <p style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '1rem' }}>Rankings de la Liga SWU</p>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.4em', color: 'var(--holo-accent)', marginBottom: '0.75rem' }}>
+          ── FORMULARIO OFICIAL ──
+        </div>
+        <h1 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',
+          fontWeight: 900,
+          letterSpacing: '0.1em',
+          color: 'var(--holo-primary)',
+          textShadow: '0 0 30px rgba(0,212,255,0.5)',
+          marginBottom: '0.5rem',
+        }}>
+          INSCRIPCIÓN A LA LIGA
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '1rem' }}>
+          Completa el formulario para unirte a la liga SWU
+        </p>
       </div>
 
-      <div className="holo-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.15em', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>TEMPORADA:</span>
-          <select className="holo-select" value={selectedSeason} onChange={e => setSelectedSeason(e.target.value)} style={{ maxWidth: '300px' }}>
-            {seasons.map(s => <option key={s.id} value={s.id}>{s.name} ({s.year}){s.is_active ? ' — ACTIVA' : ''}</option>)}
-          </select>
-          {seasons.find(s => s.id === selectedSeason)?.is_active && (
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--holo-accent)', border: '1px solid var(--holo-accent)', padding: '0.2rem 0.6rem', animation: 'pulse-glow 2s infinite' }}>EN VIVO</span>
-          )}
+      {state === 'success' ? (
+        /* Success state */
+        <div className="holo-card" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--holo-accent)', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
+            SOLICITUD ENVIADA
+          </div>
+          <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: 1.7 }}>
+            Tu inscripción está pendiente de aprobación.<br />
+            El administrador de la liga la revisará pronto.
+          </p>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <button className="holo-btn">VER LEADERBOARD</button>
+          </Link>
         </div>
-      </div>
+      ) : (
+        /* Form */
+        <div className="holo-card" style={{ padding: '2rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div>
+              <label style={{ fontFamily: 'var(--font-display)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--text-dim)', display: 'block', marginBottom: '0.5rem' }}>
+                NOMBRE COMPLETO
+              </label>
+              <input
+                type="text"
+                className="holo-input"
+                placeholder="Tu nombre completo..."
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                required
+                disabled={state === 'loading'}
+              />
+            </div>
 
-      <div className="holo-card">
-        <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 100px 120px 100px', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-dim)', gap: '1rem' }}>
-          {['POS', 'PILOTO', 'TORNEOS', 'CAMP / OTROS', 'PTS'].map(h => (
-            <div key={h} style={{ fontFamily: 'var(--font-display)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--text-dim)' }}>{h}</div>
-          ))}
-        </div>
-        {loading ? (
-          <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-dim)', fontFamily: 'var(--font-display)', fontSize: '0.7rem', letterSpacing: '0.2em' }}>CARGANDO DATOS...</div>
-        ) : leaderboard.length === 0 ? (
-          <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-dim)', fontFamily: 'var(--font-display)', fontSize: '0.7rem', letterSpacing: '0.2em' }}>SIN DATOS — TEMPORADA PENDIENTE</div>
-        ) : (
-          leaderboard.map((entry, idx) => (
-            <div key={entry.player_id} className="animate-in" style={{ display: 'grid', gridTemplateColumns: '60px 1fr 100px 120px 100px', padding: '1rem 1.5rem', gap: '1rem', borderBottom: idx < leaderboard.length - 1 ? '1px solid var(--border-dim)' : 'none', background: idx < 3 ? `rgba(0,212,255,${0.03 - idx * 0.008})` : 'transparent', alignItems: 'center', animationDelay: `${idx * 0.06}s` }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: idx < 3 ? '1.2rem' : '0.9rem', fontWeight: 700 }} className={getRankClass(idx + 1)}>{getRankIcon(idx + 1)}</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', color: idx === 0 ? 'var(--holo-gold)' : 'var(--text-primary)' }}>{entry.player_name}</div>
-              <div style={{ fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{entry.tournaments_played}</div>
-              <div style={{ fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                <span style={{ color: 'var(--holo-accent)' }}>{entry.wins}</span>
-                <span style={{ color: 'var(--text-dim)' }}> / {Number(entry.tournaments_played) - Number(entry.wins)}</span>
+            <div>
+              <label style={{ fontFamily: 'var(--font-display)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--text-dim)', display: 'block', marginBottom: '0.5rem' }}>
+                USUARIO MELEE.GG
+              </label>
+              <div style={{ position: 'relative' }}>
+                <span style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-dim)',
+                  pointerEvents: 'none',
+                }}>
+                  @
+                </span>
+                <input
+                  type="text"
+                  className="holo-input"
+                  placeholder="tu_usuario"
+                  value={melegg}
+                  onChange={e => setMelegg(e.target.value)}
+                  required
+                  disabled={state === 'loading'}
+                  style={{ paddingLeft: '1.75rem' }}
+                />
               </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--holo-primary)', textShadow: idx === 0 ? 'var(--glow-sm)' : 'none' }}>
-                {entry.total_points}<span style={{ fontSize: '0.55rem', color: 'var(--text-dim)', marginLeft: '3px' }}>PT</span>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>
+                Tu nombre de usuario en melee.gg
               </div>
             </div>
-          ))
-        )}
-      </div>
+
+            {state === 'error' && (
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--holo-danger)', border: '1px solid rgba(255,51,102,0.3)', padding: '0.75rem 1rem', background: 'rgba(255,51,102,0.05)' }}>
+                ⚠ {errorMsg}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="holo-btn"
+              disabled={state === 'loading'}
+              style={{ marginTop: '0.5rem', padding: '0.8rem', opacity: state === 'loading' ? 0.6 : 1, cursor: state === 'loading' ? 'not-allowed' : 'pointer' }}
+            >
+              {state === 'loading' ? 'ENVIANDO...' : 'ENVIAR INSCRIPCIÓN'}
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }
