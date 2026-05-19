@@ -3,7 +3,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
-  title: 'SWTCG Liga Imperial',
+  title: 'SWw Liga La Quinta',
   description: 'Star Wars Trading Card Game — Liga de Torneo Semanal',
 }
 
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           position: 'relative',
           zIndex: 1,
         }}>
-          SWTCG LIGA IMPERIAL — LA FUERZA TE ACOMPAÑA
+          SWU LIGA LA QUINTA — QUE LA FUERZA LOS ACOMPAÑE
         </footer>
       </body>
     </html>
