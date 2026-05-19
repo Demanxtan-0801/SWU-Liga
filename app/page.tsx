@@ -114,6 +114,7 @@ export default function AdminDashboard() {
     loadData(); flash('✅ Temporada activa actualizada')
   }
 
+  // --- Registrations ---
   async function approveRegistration(id: string, fullName: string) {
     // Add to players table
     const { error: pe } = await supabase.from('players').insert({ name: fullName })
@@ -131,7 +132,7 @@ export default function AdminDashboard() {
   }
 
   // --- Hall of fame ---
-  async function submitHof() { // <--- ¡AQUÍ ESTABA EL CAMBIO! Declaramos la función asíncrona correctamente
+  async function submitHof() {
     if (!hofSeason || !hofPlayer) return flash('⚠ Selecciona temporada y jugador')
     let photoUrl = null
     if (hofPhoto) {
@@ -379,6 +380,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
       {/* REGISTRATIONS TAB */}
       {tab === 'registrations' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -460,5 +462,3 @@ export default function AdminDashboard() {
     </div>
   )
 }
-
-// Ensure no static prerendering
