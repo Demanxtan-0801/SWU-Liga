@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 const links = [
   { href: '/', label: 'Leaderboard' },
   { href: '/hall-of-fame', label: 'Hall de la Fama' },
+  { href: '/inscripcion', label: 'Inscripción' },
 ]
 
 export default function Navbar() {
@@ -62,7 +63,7 @@ export default function Navbar() {
               color: 'var(--holo-primary)',
               textShadow: 'var(--glow-sm)',
             }}>
-              SWU<span style={{ color: 'var(--text-dim)', margin: '0 0.5rem' }}>|</span>LIGA LA QUINTA
+              SWTCG<span style={{ color: 'var(--text-dim)', margin: '0 0.5rem' }}>|</span>LIGA
             </span>
           </div>
         </Link>
