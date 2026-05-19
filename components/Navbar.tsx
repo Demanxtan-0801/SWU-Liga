@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 const links = [
   { href: '/', label: 'Leaderboard' },
   { href: '/hall-of-fame', label: 'Hall de la Fama' },
-  { href: '/inscripcion', label: 'Inscripción' },
+  { href: '/inscripciones', label: 'Inscripción' },
 ]
 
 export default function Navbar() {
