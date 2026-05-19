@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { getPointsForPosition, getPositionLabel } from '@/lib/supabase'
 import { Season, Player, Tournament } from '@/types'
 
-type Tab = 'tournament' | 'players' | 'seasons' | 'hof'
+type Tab = 'tournament' | 'players' | 'seasons' | 'hof' | 'registrations'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [seasons, setSeasons] = useState<Season[]>([])
   const [players, setPlayers] = useState<Player[]>([])
   const [tournaments, setTournaments] = useState<Tournament[]>([])
+  const [registrations, setRegistrations] = useState<{id:string, full_name:string, melegg_username:string, status:string, created_at:string}[]>([])
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
 
@@ -43,14 +44,16 @@ export default function AdminDashboard() {
   }, [])
 
   async function loadData() {
-    const [{ data: s }, { data: p }, { data: t }] = await Promise.all([
+    const [{ data: s }, { data: p }, { data: t }, { data: r }] = await Promise.all([
       supabase.from('seasons').select('*').order('year', { ascending: false }),
       supabase.from('players').select('*').order('name'),
       supabase.from('tournaments').select('*').order('date', { ascending: false }),
+      supabase.from('registrations').select('*').order('created_at', { ascending: false }),
     ])
     if (s) { setSeasons(s); setSelSeason(s.find((x: Season) => x.is_active)?.id || s[0]?.id || '') }
     if (p) setPlayers(p)
     if (t) setTournaments(t)
+    if (r) setRegistrations(r)
     setLoading(false)
   }
 
@@ -112,7 +115,21 @@ export default function AdminDashboard() {
   }
 
   // --- Hall of fame ---
-  async function submitHof() {
+  async function approveRegistration(id: string, fullName: string) {
+    // Add to players table
+    const { error: pe } = await supabase.from('players').insert({ name: fullName })
+    if (pe) return flash('Error al agregar jugador: ' + pe.message)
+    // Mark as approved
+    await supabase.from('registrations').update({ status: 'approved' }).eq('id', id)
+    loadData()
+    flash('✅ Jugador aprobado y agregado a la liga')
+  }
+
+  async function rejectRegistration(id: string) {
+    await supabase.from('registrations').update({ status: 'rejected' }).eq('id', id)
+    loadData()
+    flash('✅ Inscripción rechazada')
+  }
     if (!hofSeason || !hofPlayer) return flash('⚠ Selecciona temporada y jugador')
     let photoUrl = null
     if (hofPhoto) {
@@ -168,7 +185,7 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-dim)', marginBottom: '2rem' }}>
-        {([['tournament', '⚔ TORNEO'], ['players', '👤 JUGADORES'], ['seasons', '📅 TEMPORADAS'], ['hof', '🏆 HALL OF FAME']] as [Tab, string][]).map(([t, label]) => (
+        {([['tournament', '⚔ TORNEO'], ['players', '👤 JUGADORES'], ['seasons', '📅 TEMPORADAS'], ['hof', '🏆 HALL OF FAME'], ['registrations', `📋 INSCRIPCIONES${registrations.filter(r => r.status === 'pending').length > 0 ? ` (${registrations.filter(r => r.status === 'pending').length})` : ''}`]] as [Tab, string][]).map(([t, label]) => (
           <button key={t} style={tabStyle(t)} onClick={() => setTab(t)}>{label}</button>
         ))}
       </div>
@@ -358,6 +375,84 @@ export default function AdminDashboard() {
               CONSAGRAR CAMPEÓN
             </button>
           </div>
+        </div>
+      )}
+      {/* REGISTRATIONS TAB */}
+      {tab === 'registrations' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {registrations.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '4rem', fontFamily: 'var(--font-display)', fontSize: '0.7rem', letterSpacing: '0.2em', color: 'var(--text-dim)' }}>
+              SIN INSCRIPCIONES AÚN
+            </div>
+          ) : (
+            <>
+              {/* Pending */}
+              {registrations.filter(r => r.status === 'pending').length > 0 && (
+                <div className="holo-card" style={{ padding: '1.5rem' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.2em', color: 'var(--holo-warn)', marginBottom: '1rem' }}>
+                    PENDIENTES ({registrations.filter(r => r.status === 'pending').length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {registrations.filter(r => r.status === 'pending').map(r => (
+                      <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,170,0,0.04)', border: '1px solid rgba(255,170,0,0.15)', borderRadius: '2px' }}>
+                        <div>
+                          <div style={{ fontFamily: 'var(--font-body)', fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>{r.full_name}</div>
+                          <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.55rem', letterSpacing: '0.15em', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
+                            @{r.melegg_username} · {new Date(r.created_at).toLocaleDateString('es-CL')}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="holo-btn"
+                            onClick={() => approveRegistration(r.id, r.full_name)}
+                            style={{ borderColor: 'var(--holo-accent)', color: 'var(--holo-accent)', fontSize: '0.55rem', padding: '0.4rem 0.9rem' }}
+                          >
+                            ✓ APROBAR
+                          </button>
+                          <button
+                            className="holo-btn"
+                            onClick={() => rejectRegistration(r.id)}
+                            style={{ borderColor: 'var(--holo-danger)', color: 'var(--holo-danger)', fontSize: '0.55rem', padding: '0.4rem 0.9rem' }}
+                          >
+                            ✕ RECHAZAR
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Processed */}
+              {registrations.filter(r => r.status !== 'pending').length > 0 && (
+                <div className="holo-card" style={{ padding: '1.5rem' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.2em', color: 'var(--text-dim)', marginBottom: '1rem' }}>
+                    PROCESADAS
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {registrations.filter(r => r.status !== 'pending').map(r => (
+                      <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--bg-surface)', borderRadius: '2px' }}>
+                        <div>
+                          <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{r.full_name}</span>
+                          <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.5rem', letterSpacing: '0.15em', color: 'var(--text-dim)', marginLeft: '0.75rem' }}>@{r.melegg_username}</span>
+                        </div>
+                        <span style={{
+                          fontFamily: 'var(--font-display)',
+                          fontSize: '0.5rem',
+                          letterSpacing: '0.15em',
+                          color: r.status === 'approved' ? 'var(--holo-accent)' : 'var(--holo-danger)',
+                          border: `1px solid ${r.status === 'approved' ? 'rgba(0,255,204,0.3)' : 'rgba(255,51,102,0.3)'}`,
+                          padding: '0.2rem 0.5rem',
+                        }}>
+                          {r.status === 'approved' ? 'APROBADO' : 'RECHAZADO'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
