@@ -8,13 +8,21 @@ import { Season, Player, Tournament } from '@/types'
 
 type Tab = 'tournament' | 'players' | 'seasons' | 'hof' | 'registrations'
 
+interface Registration {
+  id: string
+  full_name: string
+  melegg_username: string
+  status: string
+  created_at: string
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('tournament')
   const [seasons, setSeasons] = useState<Season[]>([])
   const [players, setPlayers] = useState<Player[]>([])
   const [tournaments, setTournaments] = useState<Tournament[]>([])
-  const [registrations, setRegistrations] = useState<{id:string, full_name:string, melegg_username:string, status:string, created_at:string}[]>([])
+  const [registrations, setRegistrations] = useState<Registration[]>([])
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
 
@@ -22,7 +30,7 @@ export default function AdminDashboard() {
   const [selSeason, setSelSeason] = useState('')
   const [tournName, setTournName] = useState('')
   const [tournDate, setTournDate] = useState(new Date().toISOString().split('T')[0])
-  const [results, setResults] = useState<Record<string, number>>({}) // playerId -> position (0=attended)
+  const [results, setResults] = useState<Record<string, number>>({})
 
   // New player
   const [newPlayerName, setNewPlayerName] = useState('')
@@ -64,7 +72,6 @@ export default function AdminDashboard() {
 
   function flash(m: string) { setMsg(m); setTimeout(() => setMsg(''), 3000) }
 
-  // --- Register tournament results ---
   async function submitTournament() {
     if (!selSeason || !tournName || !tournDate) return flash('⚠ Completa todos los campos del torneo')
     const participants = Object.keys(results)
@@ -92,7 +99,6 @@ export default function AdminDashboard() {
     flash('✅ Torneo registrado exitosamente')
   }
 
-  // --- Add player ---
   async function addPlayer() {
     if (!newPlayerName.trim()) return
     const { error } = await supabase.from('players').insert({ name: newPlayerName.trim() })
@@ -100,7 +106,6 @@ export default function AdminDashboard() {
     setNewPlayerName(''); loadData(); flash('✅ Jugador agregado')
   }
 
-  // --- Add season ---
   async function addSeason() {
     if (!newSeasonName.trim()) return
     const { error } = await supabase.from('seasons').insert({ name: newSeasonName.trim(), year: newSeasonYear, is_active: false })
@@ -114,22 +119,7 @@ export default function AdminDashboard() {
     loadData(); flash('✅ Temporada activa actualizada')
   }
 
-  // --- Hall of fame ---
-  async function approveRegistration(id: string, fullName: string) {
-    // Add to players table
-    const { error: pe } = await supabase.from('players').insert({ name: fullName })
-    if (pe) return flash('Error al agregar jugador: ' + pe.message)
-    // Mark as approved
-    await supabase.from('registrations').update({ status: 'approved' }).eq('id', id)
-    loadData()
-    flash('✅ Jugador aprobado y agregado a la liga')
-  }
-
-  async function rejectRegistration(id: string) {
-    await supabase.from('registrations').update({ status: 'rejected' }).eq('id', id)
-    loadData()
-    flash('✅ Inscripción rechazada')
-  }
+  async function submitHof() {
     if (!hofSeason || !hofPlayer) return flash('⚠ Selecciona temporada y jugador')
     let photoUrl = null
     if (hofPhoto) {
@@ -145,6 +135,22 @@ export default function AdminDashboard() {
     setHofSeason(''); setHofPlayer(''); setHofPhoto(null)
     flash('✅ Hall de la Fama actualizado')
   }
+
+  async function approveRegistration(id: string, fullName: string) {
+    const { error: pe } = await supabase.from('players').insert({ name: fullName })
+    if (pe) return flash('Error al agregar jugador: ' + pe.message)
+    await supabase.from('registrations').update({ status: 'approved' }).eq('id', id)
+    loadData()
+    flash('✅ Jugador aprobado y agregado a la liga')
+  }
+
+  async function rejectRegistration(id: string) {
+    await supabase.from('registrations').update({ status: 'rejected' }).eq('id', id)
+    loadData()
+    flash('✅ Inscripción rechazada')
+  }
+
+  const pendingCount = registrations.filter(r => r.status === 'pending').length
 
   const tabStyle = (t: Tab) => ({
     fontFamily: 'var(--font-display)',
@@ -167,7 +173,6 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem' }}>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--holo-warn)', marginBottom: '0.25rem' }}>PANEL DE CONTROL</div>
@@ -176,18 +181,20 @@ export default function AdminDashboard() {
         <button onClick={logout} className="holo-btn" style={{ borderColor: 'var(--holo-danger)', color: 'var(--holo-danger)' }}>SALIR</button>
       </div>
 
-      {/* Flash message */}
       {msg && (
         <div style={{ padding: '0.75rem 1.25rem', marginBottom: '1.5rem', fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.1em', color: msg.startsWith('✅') ? 'var(--holo-accent)' : 'var(--holo-danger)', border: `1px solid ${msg.startsWith('✅') ? 'rgba(0,255,204,0.3)' : 'rgba(255,51,102,0.3)'}`, background: msg.startsWith('✅') ? 'rgba(0,255,204,0.05)' : 'rgba(255,51,102,0.05)' }}>
           {msg}
         </div>
       )}
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-dim)', marginBottom: '2rem' }}>
-        {([['tournament', '⚔ TORNEO'], ['players', '👤 JUGADORES'], ['seasons', '📅 TEMPORADAS'], ['hof', '🏆 HALL OF FAME'], ['registrations', `📋 INSCRIPCIONES${registrations.filter(r => r.status === 'pending').length > 0 ? ` (${registrations.filter(r => r.status === 'pending').length})` : ''}`]] as [Tab, string][]).map(([t, label]) => (
-          <button key={t} style={tabStyle(t)} onClick={() => setTab(t)}>{label}</button>
-        ))}
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-dim)', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        <button style={tabStyle('tournament')} onClick={() => setTab('tournament')}>⚔ TORNEO</button>
+        <button style={tabStyle('players')} onClick={() => setTab('players')}>👤 JUGADORES</button>
+        <button style={tabStyle('seasons')} onClick={() => setTab('seasons')}>📅 TEMPORADAS</button>
+        <button style={tabStyle('hof')} onClick={() => setTab('hof')}>🏆 HALL OF FAME</button>
+        <button style={tabStyle('registrations')} onClick={() => setTab('registrations')}>
+          📋 INSCRIPCIONES{pendingCount > 0 ? ` (${pendingCount})` : ''}
+        </button>
       </div>
 
       {/* TOURNAMENT TAB */}
@@ -248,7 +255,6 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            {/* Preview */}
             {Object.keys(results).length > 0 && (
               <div style={{ padding: '1rem', background: 'rgba(0,212,255,0.03)', border: '1px solid var(--border-dim)', marginBottom: '1rem', borderRadius: '2px' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.5rem', letterSpacing: '0.2em', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>RESUMEN</div>
@@ -269,7 +275,6 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          {/* Recent tournaments */}
           {tournaments.length > 0 && (
             <div className="holo-card" style={{ padding: '1.5rem' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.2em', color: 'var(--text-dim)', marginBottom: '1rem' }}>TORNEOS RECIENTES</div>
@@ -377,6 +382,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
       {/* REGISTRATIONS TAB */}
       {tab === 'registrations' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -386,7 +392,6 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <>
-              {/* Pending */}
               {registrations.filter(r => r.status === 'pending').length > 0 && (
                 <div className="holo-card" style={{ padding: '1.5rem' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.2em', color: 'var(--holo-warn)', marginBottom: '1rem' }}>
@@ -402,18 +407,10 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button
-                            className="holo-btn"
-                            onClick={() => approveRegistration(r.id, r.full_name)}
-                            style={{ borderColor: 'var(--holo-accent)', color: 'var(--holo-accent)', fontSize: '0.55rem', padding: '0.4rem 0.9rem' }}
-                          >
+                          <button className="holo-btn" onClick={() => approveRegistration(r.id, r.full_name)} style={{ borderColor: 'var(--holo-accent)', color: 'var(--holo-accent)', fontSize: '0.55rem', padding: '0.4rem 0.9rem' }}>
                             ✓ APROBAR
                           </button>
-                          <button
-                            className="holo-btn"
-                            onClick={() => rejectRegistration(r.id)}
-                            style={{ borderColor: 'var(--holo-danger)', color: 'var(--holo-danger)', fontSize: '0.55rem', padding: '0.4rem 0.9rem' }}
-                          >
+                          <button className="holo-btn" onClick={() => rejectRegistration(r.id)} style={{ borderColor: 'var(--holo-danger)', color: 'var(--holo-danger)', fontSize: '0.55rem', padding: '0.4rem 0.9rem' }}>
                             ✕ RECHAZAR
                           </button>
                         </div>
@@ -423,12 +420,9 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {/* Processed */}
               {registrations.filter(r => r.status !== 'pending').length > 0 && (
                 <div className="holo-card" style={{ padding: '1.5rem' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.2em', color: 'var(--text-dim)', marginBottom: '1rem' }}>
-                    PROCESADAS
-                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.2em', color: 'var(--text-dim)', marginBottom: '1rem' }}>PROCESADAS</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {registrations.filter(r => r.status !== 'pending').map(r => (
                       <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--bg-surface)', borderRadius: '2px' }}>
@@ -436,14 +430,7 @@ export default function AdminDashboard() {
                           <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{r.full_name}</span>
                           <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.5rem', letterSpacing: '0.15em', color: 'var(--text-dim)', marginLeft: '0.75rem' }}>@{r.melegg_username}</span>
                         </div>
-                        <span style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: '0.5rem',
-                          letterSpacing: '0.15em',
-                          color: r.status === 'approved' ? 'var(--holo-accent)' : 'var(--holo-danger)',
-                          border: `1px solid ${r.status === 'approved' ? 'rgba(0,255,204,0.3)' : 'rgba(255,51,102,0.3)'}`,
-                          padding: '0.2rem 0.5rem',
-                        }}>
+                        <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.5rem', letterSpacing: '0.15em', color: r.status === 'approved' ? 'var(--holo-accent)' : 'var(--holo-danger)', border: `1px solid ${r.status === 'approved' ? 'rgba(0,255,204,0.3)' : 'rgba(255,51,102,0.3)'}`, padding: '0.2rem 0.5rem' }}>
                           {r.status === 'approved' ? 'APROBADO' : 'RECHAZADO'}
                         </span>
                       </div>
@@ -458,5 +445,3 @@ export default function AdminDashboard() {
     </div>
   )
 }
-
-// Ensure no static prerendering
