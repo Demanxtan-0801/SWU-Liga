@@ -52,19 +52,6 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      <div className="holo-card" style={{ padding: '1rem 1.5rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.55rem', letterSpacing: '0.15em', color: 'var(--text-dim)' }}>PUNTOS:</span>
-          {[{ label: 'Asistencia', pts: 1, icon: '✅' }, { label: 'Top 4', pts: 2, icon: '⚔️' }, { label: 'Top 3', pts: 3, icon: '🥉' }, { label: 'Finalista', pts: 4, icon: '🥈' }, { label: 'Campeón', pts: 6, icon: '🏆' }].map(item => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span>{item.icon}</span>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.label}</span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.7rem', color: 'var(--holo-primary)', fontWeight: 700 }}>{item.pts}pt</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="holo-card">
         <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 100px 120px 100px', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-dim)', gap: '1rem' }}>
           {['POS', 'PILOTO', 'TORNEOS', 'CAMP / OTROS', 'PTS'].map(h => (
