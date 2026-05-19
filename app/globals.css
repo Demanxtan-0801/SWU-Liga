@@ -24,16 +24,17 @@
   --font-body: 'Rajdhani', sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  min-height: 100%;
+}
 body {
   background-color: var(--bg-void);
   background-image: url('/bg.png');
   background-size: cover;
   background-position: center top;
-  background-attachment: scroll;
   background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center center;
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 16px;
@@ -42,7 +43,7 @@ body {
   overflow-x: hidden;
 }
 body > main {
-  background: linear-gradient(180deg, rgba(0,8,16,0.7) 0%, rgba(0,8,16,0.85) 40%, rgba(0,8,16,0.95) 100%);
+  background: linear-gradient(180deg, rgba(0,8,16,0.6) 0%, rgba(0,8,16,0.75) 100%);
   min-height: 100vh;
 }
 body::before {
