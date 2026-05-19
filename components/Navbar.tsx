@@ -33,7 +33,7 @@ export default function Navbar() {
               </svg>
             </div>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.15em', color: 'var(--holo-primary)', textShadow: 'var(--glow-sm)' }}>
-              SWTCG<span style={{ color: 'var(--text-dim)', margin: '0 0.4rem' }}>|</span>LIGA
+              SWU<span style={{ color: 'var(--text-dim)', margin: '0 0.4rem' }}>|</span>LIGA LA QUINTA
             </span>
           </div>
         </Link>
