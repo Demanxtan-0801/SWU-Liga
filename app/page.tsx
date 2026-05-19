@@ -36,8 +36,8 @@ export default function LeaderboardPage() {
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '3rem 2rem' }}>
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', letterSpacing: '0.4em', color: 'var(--holo-accent)', marginBottom: '0.75rem' }}>── TRANSMISIÓN IMPERIAL ──</div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 900, letterSpacing: '0.1em', color: 'var(--holo-primary)', textShadow: '0 0 30px rgba(0,212,255,0.5), 0 0 60px rgba(0,212,255,0.2)', marginBottom: '0.5rem' }}>TABLA DE MANDO</h1>
-        <p style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '1rem' }}>Rankings de la Liga SWTCG</p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 5vw, 3rem)', fontWeight: 900, letterSpacing: '0.1em', color: 'var(--holo-primary)', textShadow: '0 0 30px rgba(0,212,255,0.5), 0 0 60px rgba(0,212,255,0.2)', marginBottom: '0.5rem' }}>TABLA DE RECOMPENSA</h1>
+        <p style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '1rem' }}>Rankings de la Liga SWU</p>
       </div>
 
       <div className="holo-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
